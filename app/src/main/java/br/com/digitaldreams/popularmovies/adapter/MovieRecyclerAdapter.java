@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
@@ -36,9 +35,9 @@ public class MovieRecyclerAdapter extends RecyclerView.Adapter<MovieRecyclerAdap
     }
 
     public MovieRecyclerAdapter(ArrayList<Movies> mDataSet, Context mContext) {
-        if (mDataSet == null){
+        /*if (mDataSet == null){
             throw new NullPointerException("DataSet cannot be null");
-        }
+        }*/
         if (mContext == null){
             throw new NullPointerException("Context cannot be null");
         }
@@ -48,9 +47,9 @@ public class MovieRecyclerAdapter extends RecyclerView.Adapter<MovieRecyclerAdap
     }
 
     public void notifyDataSetChanged(ArrayList<Movies> mDataSet){
-        if (mDataSet == null){
+        /*if (mDataSet == null){
             throw new NullPointerException("DataSet cannot be null");
-        }
+        }*/
 
         this.mDataSet = mDataSet;
         notifyDataSetChanged();
@@ -59,7 +58,7 @@ public class MovieRecyclerAdapter extends RecyclerView.Adapter<MovieRecyclerAdap
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.movie_item, parent, false);
+                .inflate(R.layout.movie_list_item, parent, false);
 
         ViewHolder vh = new ViewHolder(v);
         return vh;

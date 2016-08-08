@@ -1,6 +1,8 @@
 package br.com.digitaldreams.popularmovies.models;
 
 import android.graphics.Movie;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.widget.ImageView;
 
 import org.json.JSONArray;
@@ -8,6 +10,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
@@ -17,50 +22,88 @@ import br.com.digitaldreams.popularmovies.Networking.FetchMovieRequest;
 /**
  * Created by josecostamartins on 7/24/16.
  */
-public class Movies {
-    private static final String key = "7671bc75195b14bf9991ba9f478c75fe";
+public class Movies implements Parcelable {
+
+    private static final String key = null;
     private static final String baseURL = "https://api.themoviedb.org/3/movie";
 
-    private static int currentPage; //request
+    private static int currentPage = 0; //request
     private static int total_results; //request
     private static int total_pages; //request
 
     private Boolean adult;
-    private String backdropPath; //image
-    private ArrayList<Integer> genreIds;
+    private Boolean video;
     private Integer id;
+    private Integer voteCount;
+    private Double populatity;
+    private Double voteAverage;
+    private String backdropPath; //image
     private String originalLanguage;
     private String originalTitle;
     private String overview;
-    private Date releaseDate;
     private String title;
     private String posterPath;
-    private Double populatity;
-    private Boolean video;
-    private Double voteAverage;
-    private Integer voteCount;
+    private ArrayList<Integer> genreIds;
+    private Date releaseDate;
 
     private static final String[] imageSizes = {"w92", "w154", "w185", "w342", "w500", "w780", "original"};
+
+    public Movies() {
+        if (baseURL == null){
+            throw new NullPointerException("ApiKey cannot be null");
+        }
+
+    }
+
+    public Movies(Parcel parcel) {
+        if (baseURL == null){
+            throw new NullPointerException("ApiKey cannot be null");
+        }
+
+        adult = parcel.readByte() != 0;
+        video = parcel.readByte() != 0;
+        id = parcel.readInt();
+        voteCount = parcel.readInt();
+        populatity = parcel.readDouble();
+        voteAverage = parcel.readDouble();
+        backdropPath = parcel.readString();
+        originalLanguage = parcel.readString();
+        originalTitle = parcel.readString();
+        overview = parcel.readString();
+        title = parcel.readString();
+        posterPath = parcel.readString();
+        releaseDate = stringToDate(parcel.readString());
+
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        //ids
+        parcel.writeByte((byte) (adult ? 1 : 0));
+        parcel.writeByte((byte) (video ? 1 : 0));
+        parcel.writeInt(id);
+        parcel.writeInt(voteCount);
+        parcel.writeDouble(populatity);
+        parcel.writeDouble(voteAverage);
+        parcel.writeString(backdropPath);
+        parcel.writeString(originalLanguage);
+        parcel.writeString(originalTitle);
+        parcel.writeString(overview);
+        parcel.writeString(title);
+        parcel.writeString(posterPath);
+        parcel.writeString(dateToString());
+    }
 
     public static String getKey() {
         return key;
     }
 
-    public static ArrayList<Movies> getMovieList() {
-        FetchMovieRequest movieRequest = new FetchMovieRequest(baseURL, key, null);
-        String answer = null;
-        try {
-            answer = movieRequest.execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        return parseMovieList(answer);
+    public static String getBaseURL() {
+        return baseURL;
     }
 
-    private static ArrayList<Movies> parseMovieList(String json){
-        if (json == null){
+    public static ArrayList<Movies> parseMovieList(String json) {
+        if (json == null) {
             return null;
         }
         try {
@@ -69,10 +112,11 @@ public class Movies {
             JSONArray results = data.getJSONArray("results");
 
             ArrayList<Movies> moviesList = new ArrayList<>();
-            for (int i = 0; i < results.length(); i++){
+            for (int i = 0; i < results.length(); i++) {
                 JSONObject current = results.getJSONObject(i);
                 Movies movies = new Movies();
                 movies.setAdult(current.optBoolean("adult", false));
+                movies.setId(current.optInt("id", 0));
                 movies.setOverview(current.optString("overview", ""));
                 movies.setPosterPath(current.optString("poster_path", ""));
                 movies.setOriginalTitle(current.optString("original_title", ""));
@@ -83,7 +127,7 @@ public class Movies {
                 movies.setVoteCount(current.optInt("vote_count", 0));
                 movies.setVoteAverage(current.optDouble("vote_average", 0.0));
                 movies.setVideo(current.optBoolean("video", false));
-//                movies.setReleaseDate();
+                movies.setReleaseDate(stringToDate(current.getString("release_date")));
 //                movies.setGenreIds();
                 moviesList.add(movies);
             }
@@ -98,7 +142,6 @@ public class Movies {
     }
 
     /**
-     *
      * @return the movie image URL with size w185
      */
     public String getMovieImageURL() {
@@ -115,12 +158,13 @@ public class Movies {
      * 4: "w500",
      * 5: "w780",
      * 6: "original".
+     *
      * @param size
      * @return the movie image URL with the specified size
      */
     public String getMovieImageURL(Integer size) {
         String finalUrl;
-        if (size == null){
+        if (size == null) {
             throw new NullPointerException("Please inform image size");
         }
 
@@ -240,4 +284,47 @@ public class Movies {
     public void setAdult(Boolean adult) {
         this.adult = adult;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    private static Date stringToDate(String date){
+        String dateFormat = "yyyy-MM-dd";
+        if (date == null){
+            return null;
+        }
+        DateFormat df = new SimpleDateFormat(dateFormat);
+        try {
+            return df.parse(date);
+        }
+        catch (ParseException e){
+            e.printStackTrace();
+        }
+
+        return null;
+
+    }
+
+    public String dateToString(){
+        String dateFormat = "yyyy-MM-dd";
+        if (releaseDate == null){
+            return null;
+        }
+        DateFormat df = new SimpleDateFormat(dateFormat);
+        return df.format(releaseDate);
+    }
+
+    public static final Parcelable.Creator<Movies> CREATOR = new Parcelable.Creator<Movies>(){
+        @Override
+        public Movies createFromParcel(Parcel parcel) {
+            return new Movies(parcel);
+        }
+
+        @Override
+        public Movies[] newArray(int i) {
+            return new Movies[i];
+        }
+    };
 }

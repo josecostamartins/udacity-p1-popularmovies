@@ -1,10 +1,10 @@
 package br.com.digitaldreams.popularmovies.Networking;
 
-import android.net.Uri;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
-
-import org.json.JSONException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,7 +12,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
+
+import br.com.digitaldreams.popularmovies.Interface.NetworkingTask;
+import br.com.digitaldreams.popularmovies.R;
+import br.com.digitaldreams.popularmovies.models.Movies;
 
 /**
  * Created by josecostamartins on 7/25/16.
@@ -21,28 +24,30 @@ public class FetchMovieRequest extends AsyncTask<Void, Void, String> {
 
     private final static String LOG_TAG = FetchMovieRequest.class.getSimpleName();
     private String baseURL;
-    private String movieId;
+    private String sortOrder;
     private String APIKey;
+    private Context context;
+    private NetworkingTask listener;
 
 
-    public FetchMovieRequest(){}
+//    public FetchMovieRequest(){}
 
-    public FetchMovieRequest(String baseURL, String APIKey, String movieId){
-        if (baseURL == null){
-            throw new NullPointerException("BaseURL can't be null");
+    public FetchMovieRequest(Context context, NetworkingTask listener){
+        if (context == null){
+            throw new NullPointerException("Context can't be null");
         }
-        if (APIKey == null){
-            throw new NullPointerException("APIKey can't be null");
-        }
-        if (movieId == null){
-            movieId = "popular";
+        if (listener == null) {
+            throw new NullPointerException("Listener can't be null");
         }
 
-        this.baseURL = baseURL;
-        this.APIKey = APIKey;
-        this.movieId = movieId;
+        this.baseURL = Movies.getBaseURL();
+        this.APIKey = Movies.getKey();
+        this.context = context;
+        this.listener = listener;
 
-
+        SharedPreferences sharedPrefs =
+                PreferenceManager.getDefaultSharedPreferences(this.context);
+        sortOrder = sharedPrefs.getString(context.getString(R.string.sort_order_key), "popular");
     }
 
 
@@ -54,6 +59,8 @@ public class FetchMovieRequest extends AsyncTask<Void, Void, String> {
     @Override
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
+        listener.onFinished(s);
+
     }
 
     @Override
@@ -83,7 +90,7 @@ public class FetchMovieRequest extends AsyncTask<Void, Void, String> {
             // Construct the URL for the OpenWeatherMap query
             // Possible parameters are avaiable at OWM's forecast API page, at
             // http://openweathermap.org/API#forecast
-            final String MOVIE_URL = this.baseURL + "/" + this.movieId + "?api_key=" + this.APIKey;
+            final String MOVIE_URL = this.baseURL + "/" + this.sortOrder + "?api_key=" + this.APIKey;
 
             URL url = new URL(MOVIE_URL);
 
