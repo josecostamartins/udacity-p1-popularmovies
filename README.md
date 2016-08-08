@@ -7,4 +7,4 @@ private static final String key = null;
 
 to:
 
-private static final String key = "<YOUR API KEY>";
+private static final String key = "YOUR API KEY";
